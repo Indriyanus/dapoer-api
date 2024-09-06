@@ -1,0 +1,106 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Posisi {
+  STAFF
+  LEADER
+  ASMAN
+  MANAGER
+  DIREKTUR_OPERASIONAL
+  KOMISARIS
+  CEO
+}
+
+model Pengguna {
+  id             Int           @id @default(autoincrement())
+  namaDepan      String
+  namaBelakang   String
+  NIK            String        @unique
+  email          String        @unique
+  tanggalLahir   DateTime
+  posisi         Posisi
+  kataSandi      String
+  nomorTelepon   String? // Nomor telepon opsional
+  alamat         String? // Alamat opsional
+  dibuatPada     DateTime      @default(now())
+  diperbaruiPada DateTime      @updatedAt
+  profileImage   ProfileImage? // Relasi opsional ke model ProfileImage
+
+  @@map("pengguna")
+}
+
+model Product {
+  id        Int        @id @default(autoincrement())
+  name      String
+  code      String     @unique
+  pesan     Pesan[]
+  documents Document[]
+
+  @@map("product")
+}
+
+model Pesan {
+  id          Int      @id @default(autoincrement())
+  name        String
+  email       String
+  phone       String
+  productName String // Nama produk yang dipilih
+  message     String
+  createdAt   DateTime @default(now())
+  productId   Int
+  product     Product  @relation(fields: [productId], references: [id])
+
+  @@map("pesan")
+}
+
+model Document {
+  id          Int        @id @default(autoincrement())
+  name        String
+  type        String
+  size        Int
+  url         String
+  category    String
+  createdAt   DateTime   @default(now())
+  productId   Int?
+  product     Product?   @relation(fields: [productId], references: [id])
+  notadinas   Notadinas? @relation(fields: [notadinasId], references: [id])
+  notadinasId Int?
+
+  @@map("document")
+}
+
+model Notadinas {
+  id        Int        @id @default(autoincrement())
+  name      String
+  code      String     @unique
+  documents Document[]
+
+  @@map("notadinas")
+}
+
+model ProfileImage {
+  id         Int      @id @default(autoincrement())
+  name       String
+  url        String
+  createdAt  DateTime @default(now())
+  penggunaId Int      @unique
+  pengguna   Pengguna @relation(fields: [penggunaId], references: [id])
+
+  @@map("profileImage")
+}
+
+model Sample {
+  id        Int      @id @default(autoincrement())
+  name      String
+  code      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("samples") // if you want to use snake_case format
+}

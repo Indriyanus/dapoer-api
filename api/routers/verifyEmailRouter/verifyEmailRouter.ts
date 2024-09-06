@@ -1,7 +1,6 @@
 import { Router } from "express";
+import {verifyEmail} from "../../controllers/verifyEmailController/verifyEmailController";
 const router = Router()
-
-import { verifyEmail } from "@/controllers/verifyEmailController/verifyEmailController"; 
 
 router.post("/", verifyEmail )
 

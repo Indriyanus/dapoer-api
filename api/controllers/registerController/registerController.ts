@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from "express";
-import { prisma } from "../../connection/index";
+import { prisma } from "../../connection";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { transporter } from "@/helper/transporter";
+import {transporter} from "../../helper/transporter";
 
 export const register = async (req: Request, res: Response, next: NextFunction) => {
     try {

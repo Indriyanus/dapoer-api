@@ -1,6 +1,6 @@
 import Router from "express"
+import {position} from "../../controllers/positionController/positionController";
 const router = Router()
-import { position } from "@/controllers/positionController/positionController"
 
 router.get("/", position)
 

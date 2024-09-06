@@ -1,7 +1,6 @@
 import { Router } from "express";
+import {register} from "tsconfig-paths";
 const router = Router()
-
-import { register } from "@/controllers/registerController/registerController";
 
 router.post("/", register)
 

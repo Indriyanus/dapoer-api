@@ -2,17 +2,14 @@ import express, { Application, Request, Response, NextFunction } from "express";
 import cors from 'cors';
 import { PrismaClient } from '@prisma/client';
 import router from "./routers";
-// import dotenv from 'dotenv';
+import dotenv from 'dotenv';
 
 const path = require('path');
 
 const app: Application = express();
 const port: number = 2024;
 // Load environment variables from .env file
-// dotenv.config();
-
-// Initialize Prisma Client
-const prisma = new PrismaClient();
+dotenv.config();
 
 app.use(cors());
 app.use(express.json());

@@ -526,7 +526,7 @@ const changePassword = async (req: Request, res: Response) => {
 // router.use("/change-password", changePasswordRouter);
 
 
-router.post("/", checkLogin, loginValidation, login)
+router.post("/login/", checkLogin, loginValidation, login)
 router.use("/register", register)
 router.get("/positions", position)
 router.get("/profile/", profile)

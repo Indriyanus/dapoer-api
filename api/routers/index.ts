@@ -586,7 +586,7 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
         const verificationToken = jwt.sign({ userId: newUser.id }, "secret_verification_key", { expiresIn: "1d" });
 
         // Send verification email
-        const verificationLink = `http://localhost:3000/confirmRegisterPassword?token=${verificationToken}`;
+        const verificationLink = `/confirmRegisterPassword?token=${verificationToken}`;
         await transporter.sendMail({
             to: email,
             subject: "Email Verification - PT Dapoer Poesat Noesantara Group",

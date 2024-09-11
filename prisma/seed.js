@@ -64,12 +64,12 @@ async function main() {
   console.log('Notadinas berhasil disisipkan');
 
   // Seed documents
-  for (const document of documents) {
-    await prisma.document.create({
-      data: document,
-    });
-  }
-  console.log('Documents berhasil disisipkan');
+  // for (const document of documents) {
+  //   await prisma.document.create({
+  //     data: document,
+  //   });
+  // }
+  // console.log('Documents berhasil disisipkan');
 }
 
 main()

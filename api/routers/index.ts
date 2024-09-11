@@ -147,6 +147,9 @@ const getUserProfile = async (req: Request, res: Response, next: NextFunction) =
             where: {
                 id: parseInt(decoded.userId),
             },
+            include: {
+                profileImage: true,
+            },
         });
 
         if (!user) throw { message: "User not found", status: 404 };
@@ -164,6 +167,9 @@ const getUserProfile = async (req: Request, res: Response, next: NextFunction) =
                 posisi: user.posisi,
                 nomorTelepon: user.nomorTelepon,
                 alamat: user.alamat,
+                profileImage: user.profileImage ? {
+                    url: `http://localhost:2024/uploads/profile-images/${user.profileImage.name}`, // Pastikan URL benar
+                } : null,
             },
         });
     } catch (error) {

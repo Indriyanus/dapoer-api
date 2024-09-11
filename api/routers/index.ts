@@ -1,13 +1,14 @@
 import {NextFunction, Request, Response, Router} from "express";
-import {register} from "tsconfig-paths";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
 import {PrismaClient} from "@prisma/client";
+import { upload } from '@vercel/blob/client';
 
 const router = Router();
+const nodemailer =  require("nodemailer")
 
 const profile = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -168,7 +169,7 @@ const getUserProfile = async (req: Request, res: Response, next: NextFunction) =
                 nomorTelepon: user.nomorTelepon,
                 alamat: user.alamat,
                 profileImage: user.profileImage ? {
-                    url: `http://localhost:2024/uploads/profile-images/${user.profileImage.name}`, // Pastikan URL benar
+                    url: `http://localhost:2024/public/profile-images/${user.profileImage.name}`, // Pastikan URL benar
                 } : null,
             },
         });
@@ -372,7 +373,7 @@ const getDocuments = async (req: Request, res: Response, next: NextFunction) => 
 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        const dir = path.join(__dirname, '../../../public/uploads/profile-images');
+        const dir = path.join(__dirname, 'public/uploads/profile-images');
         if (!fs.existsSync(dir)){
             fs.mkdirSync(dir, { recursive: true });
         }
@@ -383,10 +384,17 @@ const storage = multer.diskStorage({
     }
 });
 
-const upload = multer({ storage: storage });
+const uploadStatic = multer({ storage: storage });
+
+const blob = async (file: any) => {
+    return await upload(file.name, file, {
+        access: 'public',
+        handleUploadUrl: '/api/avatar/upload',
+    })
+}
 
 const updateUserProfileImage = [
-    upload.single('image'),
+    uploadStatic.single('image'),
     async (req: Request, res: Response, next: NextFunction) => {
         try {
             const { penggunaId } = req.body;
@@ -427,9 +435,11 @@ const updateUserProfileImage = [
 ];
 
 const uploadProfileImage = [
-    upload.single('image'),
+    uploadStatic.single('image'),
     async (req: Request, res: Response, next: NextFunction) => {
         try {
+            // console.info(blob(req.file))
+
             const { penggunaId } = req.body;
             if (!penggunaId) {
                 return res.status(400).json({ error: true, message: 'penggunaId is missing' });
@@ -450,7 +460,7 @@ const uploadProfileImage = [
 
             // Hapus gambar profil lama jika ada
             if (pengguna.profileImage) {
-                const oldImagePath = path.join(__dirname, '../../../public/uploads/profile-images/', pengguna.profileImage.name);
+                const oldImagePath = path.join(__dirname, 'public/uploads/profile-images/', pengguna.profileImage.name);
                 if (fs.existsSync(oldImagePath)) {
                     fs.unlinkSync(oldImagePath); // Hapus file lama
                 }
@@ -518,6 +528,115 @@ const changePassword = async (req: Request, res: Response) => {
     }
 };
 
+export const register = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { firstName, lastName, NIK, email, birthday, phoneNumber, password, position, address } = req.body;
+
+        // Mendapatkan token dari header
+        const token = req.headers.authorization?.split(" ")[1];
+        if (!token) throw { message: "Unauthorized", status: 401 };
+
+        // Memverifikasi token dan mendapatkan data pengguna yang sedang login
+        const decoded: any = jwt.verify(token, "dpng2024");
+        const loggedInUser = await prisma.pengguna.findUnique({
+            where: {
+                id: parseInt(decoded.userId),
+            },
+        });
+
+        if (!loggedInUser) throw { message: "User not found", status: 404 };
+
+        // Logika privilege berdasarkan posisi
+        const allowedPositions: { [key: string]: string[] } = {
+            CEO: ["STAFF", "LEADER", "ASMAN", "MANAGER", "DIREKTUR_OPERASIONAL", "KOMISARIS", "CEO"],
+            KOMISARIS: ["STAFF", "LEADER", "ASMAN", "MANAGER", "DIREKTUR_OPERASIONAL", "KOMISARIS"],
+            DIREKTUR_OPERASIONAL: ["STAFF", "LEADER", "ASMAN", "MANAGER", "DIREKTUR_OPERASIONAL"],
+            MANAGER: ["STAFF", "LEADER", "ASMAN", "MANAGER"]
+        };
+
+        const userPosition = loggedInUser.posisi;
+        const canCreatePosition = allowedPositions[userPosition]?.includes(position);
+
+        if (!canCreatePosition) {
+            return res.status(403).send({
+                error: true,
+                message: `Privilege Anda tidak punya hak untuk create posisi ${position}`
+            });
+        }
+
+        // Hash password
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        // Create user
+        const newUser = await prisma.pengguna.create({
+            data: {
+                namaDepan: firstName,
+                namaBelakang: lastName,
+                NIK,
+                email,
+                tanggalLahir: new Date(birthday),
+                posisi: position,
+                kataSandi: hashedPassword,
+                nomorTelepon: phoneNumber,
+                alamat: address
+            }
+        });
+
+        // Generate verification token
+        const verificationToken = jwt.sign({ userId: newUser.id }, "secret_verification_key", { expiresIn: "1d" });
+
+        // Send verification email
+        const verificationLink = `http://localhost:3000/confirmRegisterPassword?token=${verificationToken}`;
+        await transporter.sendMail({
+            to: email,
+            subject: "Email Verification - PT Dapoer Poesat Noesantara Group",
+            html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; background-color: #f9f9f9;">
+                <h2 style="text-align: center; color: #333;">Email Verification</h2>
+                <p style="text-align: center; color: #555;">
+                    Please click the button below to verify your email address and set your password.
+                </p>
+                <div style="text-align: center; margin: 20px 0;">
+                    <a href="${verificationLink}" style="background-color: #d4b185; color: #fff; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+                        Verify Email Address
+                    </a>
+                </div>
+                <p style="text-align: center; color: #999; font-size: 12px;">
+                    If you did not create an account, no further action is required.
+                </p>
+                <p style="text-align: center; color: #999; font-size: 12px;">
+                    &copy; 2024 PT Dapoer Poesat Noesantara Group. All rights reserved.
+                </p>
+            </div>`
+        });
+
+        res.status(201).send({
+            error: false,
+            message: "User registered successfully. Please check your email to verify your account.",
+            data: newUser
+        });
+    } catch (error: any) {
+        console.error("Registration error: ", error);
+        res.status(500).send({
+            error: true,
+            message: "Registration failed",
+            details: error.message
+        });
+    }
+};
+
+export const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth : {
+        user: "ptdapoerpoesatnoesantaragroup@gmail.com",
+        pass: "jtvrdcwdkrvsjvcg"
+    },
+    tls: {
+        rejectUnauthorized: false
+    }
+})
+
+
 // router.use("/login", loginRouter);
 // router.use("/register", register);
 // router.use("/positions", position);
@@ -534,7 +653,7 @@ const changePassword = async (req: Request, res: Response) => {
 
 
 router.post("/login/", checkLogin, loginValidation, login)
-router.use("/register", register)
+router.post("/register/", register)
 router.get("/positions", position)
 router.get("/profile/", profile)
 router.get("/user-profile/", getUserProfile)
@@ -547,6 +666,6 @@ router.get("/documents/", getDocuments)
 router.get("/menuprofile/", getUserProfile)
 router.post("/menuprofile/upload", updateUserProfileImage); // Tambahkan POST di sini juga
 router.post("/profile-images/upload", uploadProfileImage)
-router.post("/", changePassword)
+router.post("/change-password/", changePassword)
 
 export default router;

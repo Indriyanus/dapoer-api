@@ -9,7 +9,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "prisma": "npx prisma",
     "start": "node api/index.ts",
-    "postinstall": "prisma generate --schema=prisma/schema.prisma && prisma migrate deploy --name init"
+    "postinstall": "prisma generate --schema=prisma/schema.prisma && prisma migrate deploy --schema=prisma/schema.prisma"
   },
   "author": "",
   "license": "ISC",

@@ -9,7 +9,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "prisma": "npx prisma",
     "start": "node api/index.ts",
-    "postinstall": "prisma generate --schema=prisma/schema.prisma"
+    "postinstall": "prisma generate --schema=prisma/schema.prisma && prisma migrate deploy --name init"
   },
   "author": "",
   "license": "ISC",
@@ -19,13 +19,14 @@
     "@types/date-fns": "^2.6.0",
     "@types/jsonwebtoken": "^9.0.6",
     "@types/node": "^22.0.2",
+    "@vercel/node": "^2.10.3",
     "axios": "^1.7.2",
     "bcrypt": "^5.1.1",
     "cors": "^2.8.5",
     "cross-env": "^7.0.3",
     "date-fns": "^3.6.0",
     "dotenv": "^16.4.5",
-    "express": "^4.19.2",
+    "express": "^5.0.0",
     "formik": "^2.4.6",
     "husky": "^9.1.4",
     "jsonwebtoken": "^9.0.2",
@@ -37,7 +38,6 @@
     "ts-node-dev": "^2.0.0",
     "tsc-alias": "^1.8.10",
     "typescript": "^5.5.4",
-    "@vercel/node": "^3.2.10",
     "yup": "^1.4.0"
   },
   "devDependencies": {

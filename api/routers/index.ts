@@ -155,6 +155,7 @@ const getUserProfile = async (req: Request, res: Response, next: NextFunction) =
             error: false,
             message: "Profile fetched successfully",
             data: {
+                id: user.id,
                 namaDepan: user.namaDepan,
                 namaBelakang: user.namaBelakang,
                 NIK: user.NIK,

@@ -395,7 +395,7 @@ const uploadBlobVercel = async (file: any, dir: string, base: string = 'files') 
 }
 
 const updateUserProfileImage = [
-    // uploadStatic.single('image'),
+    uploadStatic.single('image'),
     async (req: Request, res: Response, next: NextFunction) => {
         try {
             const { penggunaId } = req.body;
@@ -416,6 +416,7 @@ const updateUserProfileImage = [
             }
 
             const blob = await uploadBlobVercel(req.file, pengguna.id.toString(), 'profile-image')
+            console.info(blob)
 
             const newProfileImage = await prisma.profileImage.create({
                 data: {
@@ -439,10 +440,9 @@ const updateUserProfileImage = [
 ];
 
 const uploadProfileImage = [
-    // uploadStatic.single('image'),
+    uploadStatic.single('image'),
     async (req: Request, res: Response, next: NextFunction) => {
         try {
-            // console.info(blob(req.file))
 
             const { penggunaId } = req.body;
             if (!penggunaId) {

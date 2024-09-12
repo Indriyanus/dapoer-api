@@ -170,7 +170,8 @@ const getUserProfile = async (req: Request, res: Response, next: NextFunction) =
                 nomorTelepon: user.nomorTelepon,
                 alamat: user.alamat,
                 profileImage: user.profileImage ? {
-                    url: `http://localhost:2024/public/profile-images/${user.profileImage.name}`, // Pastikan URL benar
+                    // url: `http://localhost:2024/public/profile-images/${user.profileImage.name}`, // Pastikan URL benar
+                    url: user.profileImage.url,
                 } : null,
             },
         });

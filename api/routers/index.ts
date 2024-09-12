@@ -389,7 +389,7 @@ const storage = multer.diskStorage({
 const uploadStatic = multer({ storage: storage });
 
 const uploadBlobVercel = async (file: any, dir: string, base: string = 'files') => {
-    await put(`/api/${base}/${dir}/${file.name}`, file, {
+    return await put(`/api/${base}/${dir}/${file.name}`, file, {
         access: 'public'
     })
 }
@@ -421,7 +421,8 @@ const updateUserProfileImage = [
             const newProfileImage = await prisma.profileImage.create({
                 data: {
                     name: req.file.filename,
-                    url: req.file.path.replace(/\\/g, '/'), // Replacing backslashes with forward slashes
+                    url: blob.url,
+                    // url: req.file.path.replace(/\\/g, '/'), // Replacing backslashes with forward slashes
                     penggunaId: pengguna.id,
                 },
             });

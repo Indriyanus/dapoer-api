@@ -6,6 +6,8 @@ import path from "path";
 import fs from "fs";
 import {PrismaClient} from "@prisma/client";
 import { upload } from '@vercel/blob/client';
+import * as process from "node:process";
+import {put} from "@vercel/blob";
 
 const router = Router();
 const nodemailer =  require("nodemailer")
@@ -386,15 +388,14 @@ const storage = multer.diskStorage({
 
 const uploadStatic = multer({ storage: storage });
 
-const blob = async (file: any) => {
-    return await upload(file.name, file, {
-        access: 'public',
-        handleUploadUrl: '/api/avatar/upload',
+const uploadBlobVercel = async (file: any, dir: string, base: string = 'files') => {
+    await put(`/api/${base}/${dir}/${file.name}`, file, {
+        access: 'public'
     })
 }
 
 const updateUserProfileImage = [
-    uploadStatic.single('image'),
+    // uploadStatic.single('image'),
     async (req: Request, res: Response, next: NextFunction) => {
         try {
             const { penggunaId } = req.body;
@@ -413,6 +414,9 @@ const updateUserProfileImage = [
             if (!pengguna) {
                 return res.status(404).json({ error: true, message: 'User not found' });
             }
+
+            const blob = await uploadBlobVercel(req.file, pengguna.id.toString(), 'profile-image')
+            console.info(blob)
 
             const newProfileImage = await prisma.profileImage.create({
                 data: {
@@ -586,7 +590,7 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
         const verificationToken = jwt.sign({ userId: newUser.id }, "secret_verification_key", { expiresIn: "1d" });
 
         // Send verification email
-        const verificationLink = `/confirmRegisterPassword?token=${verificationToken}`;
+        const verificationLink = `${process.env.FRONT_END_URL}/confirmRegisterPassword?token=${verificationToken}`;
         await transporter.sendMail({
             to: email,
             subject: "Email Verification - PT Dapoer Poesat Noesantara Group",

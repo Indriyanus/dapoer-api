@@ -375,7 +375,7 @@ const getDocuments = async (req: Request, res: Response, next: NextFunction) => 
 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        const dir = path.join(process.cwd(), 'public/uploads/profile-images');
+        const dir = path.join('/tmp');
         if (!fs.existsSync(dir)){
             fs.mkdirSync(dir, { recursive: true });
         }

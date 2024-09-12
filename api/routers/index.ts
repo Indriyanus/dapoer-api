@@ -5,7 +5,6 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import {PrismaClient} from "@prisma/client";
-import { upload } from '@vercel/blob/client';
 import * as process from "node:process";
 import {put} from "@vercel/blob";
 
@@ -389,7 +388,7 @@ const storage = multer.diskStorage({
 const uploadStatic = multer({ storage: storage });
 
 const uploadBlobVercel = async (file: any, dir: string, base: string = 'files') => {
-    return await put(`/api/${base}/${dir}/${file.name}`, file, {
+    return await put(`api/${base}/${dir}/${file.name}`, file, {
         access: 'public'
     })
 }
@@ -415,8 +414,9 @@ const updateUserProfileImage = [
                 return res.status(404).json({ error: true, message: 'User not found' });
             }
 
-            const blob = await uploadBlobVercel(req.file, pengguna.id.toString(), 'profile-image')
-            // console.info(blob)
+            const file = fs.createReadStream(req.file.path)
+
+            const blob = await uploadBlobVercel(file, pengguna.id.toString(), 'profile-image')
 
             const newProfileImage = await prisma.profileImage.create({
                 data: {
@@ -463,19 +463,21 @@ const uploadProfileImage = [
             }
 
             // Hapus gambar profil lama jika ada
-            // if (pengguna.profileImage) {
+            if (pengguna.profileImage) {
             //     const oldImagePath = path.join(__dirname, 'public/uploads/profile-images/', pengguna.profileImage.name);
             //     if (fs.existsSync(oldImagePath)) {
             //         fs.unlinkSync(oldImagePath); // Hapus file lama
             //     }
             //
-            //     // Hapus data gambar lama dari database
-            //     await prisma.profileImage.delete({
-            //         where: { id: pengguna.profileImage.id }
-            //     });
-            // }
+                // Hapus data gambar lama dari database
+                await prisma.profileImage.delete({
+                    where: { id: pengguna.profileImage.id }
+                });
+            }
 
-            const blob = await uploadBlobVercel(req.file, pengguna.id.toString(), 'profile-image')
+            const file = fs.createReadStream(req.file.path)
+
+            const blob = await uploadBlobVercel(file, pengguna.id.toString(), 'profile-image')
 
             // Simpan gambar baru
             const newProfileImage = await prisma.profileImage.create({

@@ -375,7 +375,7 @@ const getDocuments = async (req: Request, res: Response, next: NextFunction) => 
 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        const dir = path.join(__dirname, 'public/uploads/profile-images');
+        const dir = path.join(process.cwd(), 'public/uploads/profile-images');
         if (!fs.existsSync(dir)){
             fs.mkdirSync(dir, { recursive: true });
         }
@@ -416,7 +416,7 @@ const updateUserProfileImage = [
             }
 
             const blob = await uploadBlobVercel(req.file, pengguna.id.toString(), 'profile-image')
-            console.info(blob)
+            // console.info(blob)
 
             const newProfileImage = await prisma.profileImage.create({
                 data: {

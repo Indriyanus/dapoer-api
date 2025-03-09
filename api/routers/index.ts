@@ -7,9 +7,12 @@ import fs from "fs";
 import {PrismaClient} from "@prisma/client";
 import * as process from "node:process";
 import {put} from "@vercel/blob";
+import moment from 'moment-timezone';
 
 const router = Router();
 const nodemailer =  require("nodemailer")
+moment.tz.setDefault("Asia/Jakarta");
+
 
 const profile = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -647,19 +650,132 @@ export const transporter = nodemailer.createTransport({
 })
 
 
-// router.use("/login", loginRouter);
-// router.use("/register", register);
-// router.use("/positions", position);
-// router.use("/profile", profileRouter);
-// router.use("/user-profile", getUserProfile);
-// router.use("/verify-email", verifyEmail);
-// router.use("/products", productRouter);
-// router.use("/contact", contactRouter);
-// router.use("/messages", messageRouter);
-// router.use("/documents", documentRouter);
-// router.use("/menuprofile", menuProfileRouter);
-// router.use("/profile-images", profileImageRouter);
-// router.use("/change-password", changePasswordRouter);
+const kehadiranSaya = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const token = req.headers.authorization?.split(" ")[1];
+        if (!token) throw { message: "Unauthorized", status: 401 };
+
+        const decoded: any = jwt.verify(token, "dpng2024");
+        let today = new Date()
+        const kehadiranSaya: any = await prisma.kehadiran.findFirst({
+            where: {
+                masuk: {
+                    gte: moment(today).startOf('day').local().format("YYYY-MM-DDTHH:mm:ss+00:00"),
+                    lt: moment(today).add('days', 1).startOf('day').local().format("YYYY-MM-DDTHH:mm:ss+00:00"),
+                },
+                penggunaId: parseInt(decoded.userId),
+            }
+        })
+
+        if (!kehadiranSaya) throw { message: "Kehadiran not found", status: 404 };
+
+        res.status(200).send({
+            error: false,
+            message: "Kehadiran fetched successfully",
+            data: {
+                id: kehadiranSaya.id,
+                masuk: kehadiranSaya.masuk,
+                keluar: kehadiranSaya.keluar
+            }
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+const kehadiranMasuk = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const token = req.headers.authorization?.split(" ")[1];
+        if (!token) throw { message: "Unauthorized", status: 401 };
+
+        const decoded: any = jwt.verify(token, "dpng2024");
+
+        let today = new Date()
+        console.info(moment(today).local().format("YYYY-MM-DDTHH:mm:ssZ").toString())
+        const kehadiranSaya: any = await prisma.kehadiran.findFirst({
+            where: {
+                masuk: {
+                    gte: moment(today).startOf('day').local().format("YYYY-MM-DDTHH:mm:ss+00:00"),
+                    lt: moment(today).add('days', 1).startOf('day').local().format("YYYY-MM-DDTHH:mm:ss+00:00"),
+                },
+                penggunaId: parseInt(decoded.userId),
+            }
+        })
+
+        if(kehadiranSaya) {
+            return res.status(400).json({ error: true, message: "Anda sudah melakukan absen masuk hari ini" });
+        }
+
+        const kehadiranMasuk = await prisma.kehadiran.create({
+            data: {
+                masuk: moment(today).local().format("YYYY-MM-DDTHH:mm:ss+00:00"),
+                penggunaId: parseInt(decoded.userId),
+            }
+        })
+
+        res.status(201).json({
+            error: false,
+            message: 'Message sent successfully',
+            data: kehadiranMasuk,
+        })
+    } catch (error: any) {
+        next(error);
+    }
+};
+
+const kehadiranKeluar = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const token = req.headers.authorization?.split(" ")[1];
+        if (!token) throw { message: "Unauthorized", status: 401 };
+
+        const decoded: any = jwt.verify(token, "dpng2024");
+
+        let today = new Date()
+        const kehadiranSaya: any = await prisma.kehadiran.findFirst({
+            where: {
+                masuk: {
+                    gte: moment(today).startOf('day').local().format("YYYY-MM-DDTHH:mm:ss+00:00"),
+                    lt: moment(today).add('days', 1).startOf('day').local().format("YYYY-MM-DDTHH:mm:ss+00:00"),
+                },
+                penggunaId: parseInt(decoded.userId),
+                id: parseInt(req.params.id)
+            }
+        })
+
+        if (!kehadiranSaya) throw { message: "Kehadiran not found", status: 404 };
+
+        const kehadiranKeluarSaya: any = await prisma.kehadiran.findFirst({
+            where: {
+                keluar: {
+                    gte: moment(today).startOf('day').local().format("YYYY-MM-DDTHH:mm:ss+00:00"),
+                    lt: moment(today).add('days', 1).startOf('day').local().format("YYYY-MM-DDTHH:mm:ss+00:00"),
+                },
+                penggunaId: parseInt(decoded.userId),
+            }
+        })
+
+        if(kehadiranKeluarSaya) {
+            return res.status(400).json({ error: true, message: "Anda sudah melakukan absen keluar hari ini" });
+        }
+
+        const kehadiranMasuk = await prisma.kehadiran.update({
+            where: {
+                id: parseInt(req.params.id)
+            },
+            data: {
+                keluar: moment(today).local().format("YYYY-MM-DDTHH:mm:ss+00:00")
+            }
+        })
+
+        res.status(200).json({
+            error: false,
+            message: 'Message sent successfully',
+            data: kehadiranMasuk,
+        })
+    } catch (error: any) {
+        next(error);
+    }
+};
 
 
 router.post("/login/", checkLogin, loginValidation, login)
@@ -677,5 +793,8 @@ router.get("/menuprofile/", getUserProfile)
 router.post("/menuprofile/upload", updateUserProfileImage); // Tambahkan POST di sini juga
 router.post("/profile-images/upload", uploadProfileImage)
 router.post("/change-password/", changePassword)
+router.get("/attendance/", kehadiranSaya)
+router.post("/attendance/", kehadiranMasuk)
+router.patch("/attendance/:id", kehadiranKeluar)
 
 export default router;

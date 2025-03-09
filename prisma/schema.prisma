@@ -36,6 +36,7 @@ model Pengguna {
   dibuatPada     DateTime      @default(now())
   diperbaruiPada DateTime      @updatedAt
   profileImage   ProfileImage? // Relasi opsional ke model ProfileImage
+  kehadiran      Kehadiran[] // Relasi opsional ke model Kehadiran
 
   @@map("pengguna")
 }
@@ -109,3 +110,17 @@ model Sample {
 
   @@map("samples") // if you want to use snake_case format
 }
+
+model Kehadiran {
+  id         Int      @id @default(autoincrement())
+  pengguna   Pengguna @relation(fields: [penggunaId], references: [id])
+  penggunaId Int
+  masuk      DateTime?
+  keluar     DateTime?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([createdAt(sort: Desc), penggunaId])
+  @@map("kehadiran")
+}
+

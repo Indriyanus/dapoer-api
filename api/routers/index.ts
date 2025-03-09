@@ -11,7 +11,6 @@ import moment from 'moment-timezone';
 
 const router = Router();
 const nodemailer =  require("nodemailer")
-moment.tz.setDefault("Asia/Jakarta");
 
 
 const profile = async (req: Request, res: Response, next: NextFunction) => {
@@ -657,12 +656,11 @@ const kehadiranSaya = async (req: Request, res: Response, next: NextFunction) =>
 
         const decoded: any = jwt.verify(token, "dpng2024");
         let today = new Date()
-        moment.tz("Asia/Jakarta");
         const kehadiranSaya: any = await prisma.kehadiran.findFirst({
             where: {
                 masuk: {
-                    gte: moment(today).startOf('day').local().format("YYYY-MM-DDTHH:mm:ss+00:00"),
-                    lt: moment(today).add('days', 1).startOf('day').local().format("YYYY-MM-DDTHH:mm:ss+00:00"),
+                    gte: moment(today).startOf('day').local().toISOString(),
+                    lt: moment(today).add('days', 1).startOf('day').local().toISOString(),
                 },
                 penggunaId: parseInt(decoded.userId),
             }
@@ -692,13 +690,12 @@ const kehadiranMasuk = async (req: Request, res: Response, next: NextFunction) =
         const decoded: any = jwt.verify(token, "dpng2024");
 
         let today = new Date()
-        moment.tz("Asia/Jakarta");
         console.info(moment(today).local().format("YYYY-MM-DDTHH:mm:ssZ").toString())
         const kehadiranSaya: any = await prisma.kehadiran.findFirst({
             where: {
                 masuk: {
-                    gte: moment(today).startOf('day').local().format("YYYY-MM-DDTHH:mm:ss+00:00"),
-                    lt: moment(today).add('days', 1).startOf('day').local().format("YYYY-MM-DDTHH:mm:ss+00:00"),
+                    gte: moment(today).startOf('day').local().toISOString(),
+                    lt: moment(today).add('days', 1).startOf('day').local().toISOString(),
                 },
                 penggunaId: parseInt(decoded.userId),
             }
@@ -710,7 +707,7 @@ const kehadiranMasuk = async (req: Request, res: Response, next: NextFunction) =
 
         const kehadiranMasuk = await prisma.kehadiran.create({
             data: {
-                masuk: moment(today).local().format("YYYY-MM-DDTHH:mm:ss+00:00"),
+                masuk: moment(today).local().toISOString(),
                 penggunaId: parseInt(decoded.userId),
             }
         })
@@ -733,12 +730,11 @@ const kehadiranKeluar = async (req: Request, res: Response, next: NextFunction) 
         const decoded: any = jwt.verify(token, "dpng2024");
 
         let today = new Date()
-        moment.tz("Asia/Jakarta");
         const kehadiranSaya: any = await prisma.kehadiran.findFirst({
             where: {
                 masuk: {
-                    gte: moment(today).startOf('day').local().format("YYYY-MM-DDTHH:mm:ss+00:00"),
-                    lt: moment(today).add('days', 1).startOf('day').local().format("YYYY-MM-DDTHH:mm:ss+00:00"),
+                    gte: moment(today).startOf('day').local().toISOString(),
+                    lt: moment(today).add('days', 1).startOf('day').local().toISOString(),
                 },
                 penggunaId: parseInt(decoded.userId),
                 id: parseInt(req.params.id)
@@ -750,8 +746,8 @@ const kehadiranKeluar = async (req: Request, res: Response, next: NextFunction) 
         const kehadiranKeluarSaya: any = await prisma.kehadiran.findFirst({
             where: {
                 keluar: {
-                    gte: moment(today).startOf('day').local().format("YYYY-MM-DDTHH:mm:ss+00:00"),
-                    lt: moment(today).add('days', 1).startOf('day').local().format("YYYY-MM-DDTHH:mm:ss+00:00"),
+                    gte: moment(today).startOf('day').local().toISOString(),
+                    lt: moment(today).add('days', 1).startOf('day').local().toISOString(),
                 },
                 penggunaId: parseInt(decoded.userId),
             }
@@ -766,7 +762,7 @@ const kehadiranKeluar = async (req: Request, res: Response, next: NextFunction) 
                 id: parseInt(req.params.id)
             },
             data: {
-                keluar: moment(today).local().format("YYYY-MM-DDTHH:mm:ss+00:00")
+                keluar: moment(today).local().toISOString()
             }
         })
 

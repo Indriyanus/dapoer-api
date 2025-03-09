@@ -657,6 +657,7 @@ const kehadiranSaya = async (req: Request, res: Response, next: NextFunction) =>
 
         const decoded: any = jwt.verify(token, "dpng2024");
         let today = new Date()
+        moment.tz("Asia/Jakarta");
         const kehadiranSaya: any = await prisma.kehadiran.findFirst({
             where: {
                 masuk: {
@@ -691,6 +692,7 @@ const kehadiranMasuk = async (req: Request, res: Response, next: NextFunction) =
         const decoded: any = jwt.verify(token, "dpng2024");
 
         let today = new Date()
+        moment.tz("Asia/Jakarta");
         console.info(moment(today).local().format("YYYY-MM-DDTHH:mm:ssZ").toString())
         const kehadiranSaya: any = await prisma.kehadiran.findFirst({
             where: {
@@ -731,6 +733,7 @@ const kehadiranKeluar = async (req: Request, res: Response, next: NextFunction) 
         const decoded: any = jwt.verify(token, "dpng2024");
 
         let today = new Date()
+        moment.tz("Asia/Jakarta");
         const kehadiranSaya: any = await prisma.kehadiran.findFirst({
             where: {
                 masuk: {

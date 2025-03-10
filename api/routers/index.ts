@@ -9,6 +9,7 @@ import * as process from "node:process";
 import {put} from "@vercel/blob";
 import moment from 'moment-timezone';
 
+
 const router = Router();
 const nodemailer =  require("nodemailer")
 
@@ -776,6 +777,46 @@ const kehadiranKeluar = async (req: Request, res: Response, next: NextFunction) 
     }
 };
 
+const kehadiran = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const token = req.headers.authorization?.split(" ")[1];
+        if (!token) throw { message: "Unauthorized", status: 401 };
+
+        const decoded: any = jwt.verify(token, "dpng2024");
+
+        const page = parseInt(req.query.page as string) || 1;
+        const pageSize = 25; // Number of records per page
+        const skip = (page - 1) * pageSize;
+        const nik = req.query.nik as string;
+
+        const kehadiran = await prisma.kehadiran.findMany({
+            skip: skip,
+            take: pageSize,
+            where: {
+                pengguna: {
+                    NIK: nik
+                }
+            },
+            orderBy: {
+                createdAt: 'desc'
+            },
+            include: {
+                pengguna: true
+            }
+        });
+
+        if (!kehadiran.length) throw { message: "Kehadiran not found", status: 404 };
+
+        res.status(200).send({
+            error: false,
+            message: "Kehadiran fetched successfully",
+            data: kehadiran
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
 
 router.post("/login/", checkLogin, loginValidation, login)
 router.post("/register/", register)
@@ -795,5 +836,6 @@ router.post("/change-password/", changePassword)
 router.get("/attendance/", kehadiranSaya)
 router.post("/attendance/", kehadiranMasuk)
 router.patch("/attendance/:id", kehadiranKeluar)
+router.get("/attendances", kehadiran)
 
 export default router;

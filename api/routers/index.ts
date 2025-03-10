@@ -790,6 +790,19 @@ const kehadiran = async (req: Request, res: Response, next: NextFunction) => {
         const nik = req.query.nik as string;
 
         const kehadiran = await prisma.kehadiran.findMany({
+            select: {
+                id: true,
+                masuk: true,
+                keluar: true,
+                createdAt: true,
+                pengguna: {
+                    select: {
+                        NIK: true,
+                        namaDepan: true,
+                        email: true,
+                    },
+                },
+            },
             skip: skip,
             take: pageSize,
             where: {
@@ -799,9 +812,6 @@ const kehadiran = async (req: Request, res: Response, next: NextFunction) => {
             },
             orderBy: {
                 createdAt: 'desc'
-            },
-            include: {
-                pengguna: true
             }
         });
 

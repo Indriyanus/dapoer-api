@@ -788,6 +788,8 @@ const kehadiran = async (req: Request, res: Response, next: NextFunction) => {
         const pageSize = 25; // Number of records per page
         const skip = (page - 1) * pageSize;
         const nik = req.query.nik as string;
+        const startDate = req.query.startDate ? new Date(req.query.startDate as string) : undefined;
+        const endDate = req.query.endDate ? new Date(req.query.endDate as string) : undefined;
 
         const kehadiran = await prisma.kehadiran.findMany({
             select: {
@@ -806,6 +808,10 @@ const kehadiran = async (req: Request, res: Response, next: NextFunction) => {
             skip: skip,
             take: pageSize,
             where: {
+                createdAt: {
+                    gte: startDate,
+                    lte: endDate
+                },
                 pengguna: {
                     NIK: nik
                 }

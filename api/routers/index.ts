@@ -815,8 +815,6 @@ const kehadiran = async (req: Request, res: Response, next: NextFunction) => {
             }
         });
 
-        if (!kehadiran.length) throw { message: "Kehadiran not found", status: 404 };
-
         res.status(200).send({
             error: false,
             message: "Kehadiran fetched successfully",

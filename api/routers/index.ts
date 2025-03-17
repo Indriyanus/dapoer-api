@@ -675,7 +675,13 @@ const kehadiranSaya = async (req: Request, res: Response, next: NextFunction) =>
             data: {
                 id: kehadiranSaya.id,
                 masuk: kehadiranSaya.masuk,
-                keluar: kehadiranSaya.keluar
+                keluar: kehadiranSaya.keluar,
+                latMasuk: kehadiranSaya.latMasuk,
+                longMasuk: kehadiranSaya.longMasuk,
+                locationMasuk: kehadiranSaya.locationMasuk,
+                latKeluar: kehadiranSaya.latKeluar,
+                longKeluar: kehadiranSaya.longKeluar,
+                locationKeluar: kehadiranSaya.locationKeluar
             }
         });
     } catch (error) {
@@ -691,7 +697,6 @@ const kehadiranMasuk = async (req: Request, res: Response, next: NextFunction) =
         const decoded: any = jwt.verify(token, "dpng2024");
 
         let today = new Date()
-        console.info(moment(today).local().format("YYYY-MM-DDTHH:mm:ssZ").toString())
         const kehadiranSaya: any = await prisma.kehadiran.findFirst({
             where: {
                 masuk: {
@@ -710,6 +715,9 @@ const kehadiranMasuk = async (req: Request, res: Response, next: NextFunction) =
             data: {
                 masuk: moment(today).local().toISOString(),
                 penggunaId: parseInt(decoded.userId),
+                latMasuk: req.body.latMasuk,
+                longMasuk: req.body.longMasuk,
+                locationMasuk: req.body.locationMasuk
             }
         })
 
@@ -763,7 +771,10 @@ const kehadiranKeluar = async (req: Request, res: Response, next: NextFunction) 
                 id: parseInt(req.params.id)
             },
             data: {
-                keluar: moment(today).local().toISOString()
+                keluar: moment(today).local().toISOString(),
+                latKeluar: req.body.latKeluar,
+                longKeluar: req.body.longKeluar,
+                locationKeluar: req.body.locationKeluar,
             }
         })
 
@@ -795,7 +806,13 @@ const kehadiran = async (req: Request, res: Response, next: NextFunction) => {
             select: {
                 id: true,
                 masuk: true,
+                latMasuk: true,
+                longMasuk: true,
+                locationMasuk: true,
                 keluar: true,
+                latKeluar: true,
+                longKeluar: true,
+                locationKeluar: true,
                 createdAt: true,
                 pengguna: {
                     select: {

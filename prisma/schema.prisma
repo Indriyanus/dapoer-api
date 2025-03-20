@@ -119,10 +119,10 @@ model Kehadiran {
   keluar          DateTime?
   latMasuk        Float?
   longMasuk       Float?
-  locationMasuk   String?
+  lokasiMasuk     String?
   latKeluar       Float?
   longKeluar      Float?
-  locationKeluar  String?
+  lokasiKeluar    String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 

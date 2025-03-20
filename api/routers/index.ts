@@ -8,6 +8,7 @@ import {PrismaClient} from "@prisma/client";
 import * as process from "node:process";
 import {put} from "@vercel/blob";
 import moment from 'moment-timezone';
+import axios from "axios";
 
 
 const router = Router();
@@ -678,10 +679,10 @@ const kehadiranSaya = async (req: Request, res: Response, next: NextFunction) =>
                 keluar: kehadiranSaya.keluar,
                 latMasuk: kehadiranSaya.latMasuk,
                 longMasuk: kehadiranSaya.longMasuk,
-                locationMasuk: kehadiranSaya.locationMasuk,
+                lokasiMasuk: kehadiranSaya.lokasiMasuk,
                 latKeluar: kehadiranSaya.latKeluar,
                 longKeluar: kehadiranSaya.longKeluar,
-                locationKeluar: kehadiranSaya.locationKeluar
+                lokasiKeluar: kehadiranSaya.lokasiKeluar
             }
         });
     } catch (error) {
@@ -711,13 +712,15 @@ const kehadiranMasuk = async (req: Request, res: Response, next: NextFunction) =
             return res.status(400).json({ error: true, message: "Anda sudah melakukan absen masuk hari ini" });
         }
 
+        const response = await axios.get(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${req.body.latMasuk}&lon=${req.body.longMasuk}&zoom=18&addressdetails=0`);
+
         const kehadiranMasuk = await prisma.kehadiran.create({
             data: {
                 masuk: moment(today).local().toISOString(),
                 penggunaId: parseInt(decoded.userId),
                 latMasuk: req.body.latMasuk,
                 longMasuk: req.body.longMasuk,
-                locationMasuk: req.body.locationMasuk
+                lokasiMasuk: response.data.display_name,
             }
         })
 
@@ -766,7 +769,9 @@ const kehadiranKeluar = async (req: Request, res: Response, next: NextFunction) 
             return res.status(400).json({ error: true, message: "Anda sudah melakukan absen keluar hari ini" });
         }
 
-        const kehadiranMasuk = await prisma.kehadiran.update({
+        const response = await axios.get(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${req.body.latKeluar}&lon=${req.body.longKeluar}&zoom=18&addressdetails=0`);
+
+        const kehadiranKeluar = await prisma.kehadiran.update({
             where: {
                 id: parseInt(req.params.id)
             },
@@ -774,14 +779,14 @@ const kehadiranKeluar = async (req: Request, res: Response, next: NextFunction) 
                 keluar: moment(today).local().toISOString(),
                 latKeluar: req.body.latKeluar,
                 longKeluar: req.body.longKeluar,
-                locationKeluar: req.body.locationKeluar,
+                lokasiKeluar: response.data.display_name,
             }
         })
 
         res.status(200).json({
             error: false,
             message: 'Message sent successfully',
-            data: kehadiranMasuk,
+            data: kehadiranKeluar,
         })
     } catch (error: any) {
         next(error);
@@ -808,11 +813,11 @@ const kehadiran = async (req: Request, res: Response, next: NextFunction) => {
                 masuk: true,
                 latMasuk: true,
                 longMasuk: true,
-                locationMasuk: true,
+                lokasiMasuk: true,
                 keluar: true,
                 latKeluar: true,
                 longKeluar: true,
-                locationKeluar: true,
+                lokasiKeluar: true,
                 createdAt: true,
                 pengguna: {
                     select: {

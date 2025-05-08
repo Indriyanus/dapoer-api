@@ -853,6 +853,148 @@ const kehadiran = async (req: Request, res: Response, next: NextFunction) => {
     }
 };
 
+const getGaleri = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { category } = req.query;
+
+        const galeri = await prisma.galeri.findMany({
+            where: category ? { category: category as string } : undefined,
+            orderBy: {
+                createdAt: 'desc'
+            }
+        });
+
+        res.status(200).json({
+            error: false,
+            message: "Galeri fetched successfully",
+            data: galeri,
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+const getGaleriById = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { id } = req.params;
+        const galeri = await prisma.galeri.findUnique({
+            where: { id: parseInt(id) },
+        });
+
+        if (!galeri) throw { message: "Galeri not found", status: 404 };
+
+        res.status(200).json({
+            error: false,
+            message: "Galeri fetched successfully",
+            data: galeri,
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+const createGaleri = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const decoded = decodedToken(req);
+
+        if(!req.file) {
+            return res.status(400).json({ error: true, message: 'No file uploaded' });
+        }
+
+        const { name, description, category } = req.body;
+
+        const file = fs.createReadStream(req.file.path)
+
+        const blob = await uploadBlobVercel(file, name, 'galery')
+
+        const url = blob.url
+
+        const newGaleri = await prisma.galeri.create({
+            data: { name, url, description, category },
+        });
+
+        res.status(201).json({
+            error: false,
+            message: "Galeri created successfully",
+            data: newGaleri,
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+const updateGaleri = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const decoded = decodedToken(req);
+        const { id } = req.params;
+        const { name, description, category } = req.body;
+
+        const galeri = await prisma.galeri.findUnique({
+            where: { id: parseInt(id) },
+        });
+
+        let url = '';
+
+        if (!galeri) throw { message: "Galeri not found", status: 404 };
+
+        if(req.file) {
+            const file = fs.createReadStream(req.file.path)
+
+            const blob = await uploadBlobVercel(file, name, 'galery')
+
+            url = blob.url
+        } else {
+            url = galeri.url
+        }
+
+        const updatedGaleri = await prisma.galeri.update({
+            where: { id: parseInt(id) },
+            data: { name, url, description, category },
+        });
+
+        res.status(200).json({
+            error: false,
+            message: "Galeri updated successfully",
+            data: updatedGaleri,
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+const deleteGaleri = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const decoded = decodedToken(req);
+        const { id } = req.params;
+
+        await prisma.galeri.delete({
+            where: { id: parseInt(id) },
+        });
+
+        res.status(200).json({
+            error: false,
+            message: "Galeri deleted successfully",
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+const decodedToken = (req: Request) => {
+    const token = req.headers.authorization?.split(" ")[1];
+    if (!token) throw { message: "Unauthorized", status: 401 };
+
+    const decoded: any = jwt.verify(token, "dpng2024");
+    return decoded;
+}
+
+enum GaleriCategory {
+    TELEKOMUNIKASI = "TELEKOMUNIKASI",
+    CHEMICAHAL = "CHEMICAL",
+    PARFUM = "PARFUM",
+    WEBSITE = "WEBSITE",
+    PHOTOGRAPHY = "PHOTOGRAPHY",
+}
 
 router.post("/login/", checkLogin, loginValidation, login)
 router.post("/register/", register)
@@ -873,5 +1015,10 @@ router.get("/attendance/", kehadiranSaya)
 router.post("/attendance/", kehadiranMasuk)
 router.patch("/attendance/:id", kehadiranKeluar)
 router.get("/attendances", kehadiran)
+router.get("/galeri", getGaleri);
+router.get("/galeri/:id", getGaleriById);
+router.post("/galeri", uploadStatic.single("file"), createGaleri);
+router.put("/galeri/:id", uploadStatic.single("file"), updateGaleri);
+router.delete("/galeri/:id", deleteGaleri);
 
 export default router;

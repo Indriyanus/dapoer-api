@@ -2,24 +2,9 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// datasource db {
-//   provider = "mysql"
-//   url      = env("DATABASE_URL")
-// }
-
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-}
-
-enum Posisi {
-  STAFF
-  LEADER
-  ASMAN
-  MANAGER
-  DIREKTUR_OPERASIONAL
-  KOMISARIS
-  CEO
 }
 
 model Pengguna {
@@ -31,12 +16,12 @@ model Pengguna {
   tanggalLahir   DateTime
   posisi         Posisi
   kataSandi      String
-  nomorTelepon   String? // Nomor telepon opsional
-  alamat         String? // Alamat opsional
+  nomorTelepon   String?
+  alamat         String?
   dibuatPada     DateTime      @default(now())
   diperbaruiPada DateTime      @updatedAt
-  profileImage   ProfileImage? // Relasi opsional ke model ProfileImage
-  kehadiran      Kehadiran[] // Relasi opsional ke model Kehadiran
+  kehadiran      Kehadiran[]
+  profileImage   ProfileImage?
 
   @@map("pengguna")
 }
@@ -45,8 +30,8 @@ model Product {
   id        Int        @id @default(autoincrement())
   name      String
   code      String     @unique
-  pesan     Pesan[]
   documents Document[]
+  pesan     Pesan[]
 
   @@map("product")
 }
@@ -56,7 +41,7 @@ model Pesan {
   name        String
   email       String
   phone       String
-  productName String // Nama produk yang dipilih
+  productName String
   message     String
   createdAt   DateTime @default(now())
   productId   Int
@@ -74,9 +59,9 @@ model Document {
   category    String
   createdAt   DateTime   @default(now())
   productId   Int?
-  product     Product?   @relation(fields: [productId], references: [id])
-  notadinas   Notadinas? @relation(fields: [notadinasId], references: [id])
   notadinasId Int?
+  notadinas   Notadinas? @relation(fields: [notadinasId], references: [id])
+  product     Product?   @relation(fields: [productId], references: [id])
 
   @@map("document")
 }
@@ -108,25 +93,46 @@ model Sample {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@map("samples") // if you want to use snake_case format
+  @@map("samples")
 }
 
 model Kehadiran {
-  id              Int      @id @default(autoincrement())
-  pengguna        Pengguna @relation(fields: [penggunaId], references: [id])
-  penggunaId      Int
-  masuk           DateTime?
-  keluar          DateTime?
-  latMasuk        Float?
-  longMasuk       Float?
-  lokasiMasuk     String?
-  latKeluar       Float?
-  longKeluar      Float?
-  lokasiKeluar    String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id           Int       @id @default(autoincrement())
+  penggunaId   Int
+  masuk        DateTime?
+  keluar       DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  latKeluar    Float?
+  latMasuk     Float?
+  lokasiKeluar String?
+  lokasiMasuk  String?
+  longKeluar   Float?
+  longMasuk    Float?
+  pengguna     Pengguna  @relation(fields: [penggunaId], references: [id])
 
   @@index([createdAt(sort: Desc), penggunaId])
   @@map("kehadiran")
 }
 
+model Galeri {
+  id          Int      @id @default(autoincrement())
+  name        String
+  url         String
+  description String
+  category    String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("galeri")
+}
+
+enum Posisi {
+  STAFF
+  LEADER
+  ASMAN
+  MANAGER
+  DIREKTUR_OPERASIONAL
+  KOMISARIS
+  CEO
+}
